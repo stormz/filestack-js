@@ -7,6 +7,11 @@ export const version: string;
 
 export function init(apikey: string, security?: Security): FilestackClient;
 
+export interface Security {
+    policy: string;
+    signature: string;
+}
+
 export type Source =
     'local_file_system'
     |'url'
@@ -44,14 +49,9 @@ export type TransitStatus = 'Stored' | 'InTransit' | 'Failed';
 
 export type Location = 's3' | 'azure' | 'rackspace' | 'gcs' | 'dropbox';
 
-export interface Security {
-    policy: string;
-    signature: string;
-}
-
 export interface PickOptions {
   fromSources?: Array<Source>;
-  accept?: Array<string>;
+  accept?: string | Array<string>;
   customSourceContainer?: string;
   customSourcePath?: string;
   preferLinkOverStore?: boolean;
@@ -69,6 +69,13 @@ export interface PickOptions {
   imageMax?: Array<number>;
   imageMin?: Array<number>;
   storeTo?: StoreOptions;
+  onFileSelected?(file: object): void;
+  onFileUploadStarted?(file: object): void;
+  onFileUploadProgress?(file: object, event: ProgressObject): void;
+  onFileUploadFinished?(file: object): void;
+  onFileUploadFailed?(file: object, error: object): void;
+  onClose?(): object;
+  rejectOnCancel?: boolean;
 }
 
 export interface RetrieveOptions {
@@ -87,16 +94,26 @@ export interface StoreOptions {
 }
 
 export interface UploadOptions {
-  partSize: number;
-  concurrency: number;
-  retry: number;
-  progressInterval: number,
-  // onProgress:
-  // onRetry:
+  partSize?: number;
+  concurrency?: number;
+  retry?: number;
+  progressInterval?: number;
+  onProgress?(progress: ProgressObject): void;
+  onRetry?(retry: RetryObject): void;
 }
 
-export interface TransformOptions {
+export interface ProgressObject {
+    totalPercent: number;
+    totalBytes: number;
 }
+
+export interface RetryObject {
+  location: string;
+  parts: Array<object>;
+  filename: string;
+  attempt: number;
+}
+
 
 export interface FileData {
   filename: string;
@@ -123,7 +140,7 @@ export interface FilestackClient {
     remove(handle: string): Promise<FileData>;
     retrieve(handle: string, options?: RetrieveOptions): Promise<FileData>;
     storeURL(url: string, options?: StoreOptions): Promise<FileData>;
-    transform(url: string, options?: TransformOptions): string;
+    transform(url: string, options?: object): string;
     upload(
         file: Blob | string,
         uploadOptions?: UploadOptions,
