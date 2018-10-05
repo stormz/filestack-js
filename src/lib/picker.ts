@@ -579,6 +579,10 @@ export interface PickerOptions {
    * Sets the resolution of recorded video. One of "320x240", "640x480" or "1280x720". Default is `"640x480"`.
    */
   videoResolution?: string;
+  /**
+   * Use a custom url for the picker
+   */
+  pickerUrl?: string,
 }
 
 export interface PickerCropOptions {
@@ -643,7 +647,7 @@ class PickerLoader {
 
   private async loadModule(client: Client, options?: PickerOptions): Promise<PickerInstance> {
     const { session: { urls: { pickerUrl: url } } } = client;
-    const Picker = await loadModule(url, knownModuleIds.picker);
+    const Picker = await loadModule(options.pickerUrl || url, knownModuleIds.picker);
     return new Picker(client, options);
   }
 }
